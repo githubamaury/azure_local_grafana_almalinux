@@ -1,0 +1,414 @@
+{
+  "id": null,
+  "uid": "azure-perf-full",
+  "title": "Azure Local – Full Performance (InfluxDB)",
+  "tags": [
+    "azure",
+    "influxdb",
+    "vector",
+    "perf"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "editable": true,
+  "style": "dark",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "influxdb",
+        "label": "InfluxDB",
+        "type": "datasource",
+        "query": "influxdb",
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "computer",
+        "label": "Computer",
+        "type": "query",
+        "datasource": "$influxdb",
+        "definition": "SHOW TAG VALUES FROM \"azure_perf_counter\" WITH KEY = \"computer\"",
+        "query": "SHOW TAG VALUES FROM \"azure_perf_counter\" WITH KEY = \"computer\"",
+        "multi": true,
+        "includeAll": true,
+        "refresh": 1,
+        "sort": 1,
+        "regex": "",
+        "current": {}
+      },
+      {
+        "name": "object_name",
+        "label": "Object",
+        "type": "query",
+        "datasource": "$influxdb",
+        "definition": "SHOW TAG VALUES FROM \"azure_perf_counter\" WITH KEY = \"object_name\"",
+        "query": "SHOW TAG VALUES FROM \"azure_perf_counter\" WITH KEY = \"object_name\"",
+        "multi": true,
+        "includeAll": true,
+        "refresh": 1,
+        "sort": 1,
+        "regex": "",
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Overview",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "CPU – % Processor Time (_Total)",
+      "datasource": "$influxdb",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT last(\"value\") FROM \"azure_perf_counter\" WHERE $timeFilter AND \"object_name\" = 'Processor' AND \"counter_name\" = '% Processor Time' AND \"instance_name\" = '_Total' AND \"computer\" =~ /^$computer$/ GROUP BY \"computer\""
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Memory – Available Bytes",
+      "datasource": "$influxdb",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT last(\"value\") FROM \"azure_perf_counter\" WHERE $timeFilter AND \"object_name\" = 'Memory' AND \"counter_name\" = 'Available Bytes' AND \"computer\" =~ /^$computer$/ GROUP BY \"computer\""
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 2000000000 },
+              { "color": "green", "value": 4000000000 }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Network – Bytes Total/sec",
+      "datasource": "$influxdb",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT last(\"value\") FROM \"azure_perf_counter\" WHERE $timeFilter AND \"object_name\" = 'Network Interface' AND \"counter_name\" = 'Bytes Total/sec' AND \"computer\" =~ /^$computer$/ GROUP BY \"computer\""
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Disk – Bytes/sec (LogicalDisk)",
+      "datasource": "$influxdb",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT last(\"value\") FROM \"azure_perf_counter\" WHERE $timeFilter AND \"object_name\" = 'LogicalDisk' AND \"counter_name\" =~ /Bytes.*sec/ AND \"computer\" =~ /^$computer$/ GROUP BY \"computer\""
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "CPU & Memory",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "CPU % Processor Time (_Total)",
+      "datasource": "$influxdb",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"value\") FROM \"azure_perf_counter\" WHERE $timeFilter AND \"object_name\" = 'Processor' AND \"counter_name\" = '% Processor Time' AND \"instance_name\" = '_Total' AND \"computer\" =~ /^$computer$/ GROUP BY time($__interval), \"computer\" fill(previous)"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "max", "min", "mean"]
+        },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Memory Used Bytes",
+      "datasource": "$influxdb",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"value\") FROM \"azure_perf_counter\" WHERE $timeFilter AND \"object_name\" = 'Memory' AND \"counter_name\" = 'Available Bytes' AND \"computer\" =~ /^$computer$/ GROUP BY time($__interval), \"computer\" fill(previous)"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "max", "min", "mean"]
+        },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 2,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Network & Disk",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Network – Bytes Total/sec per Interface",
+      "datasource": "$influxdb",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"value\") FROM \"azure_perf_counter\" WHERE $timeFilter AND \"object_name\" = 'Network Interface' AND \"counter_name\" = 'Bytes Total/sec' AND \"computer\" =~ /^$computer$/ GROUP BY time($__interval), \"computer\", \"instance_name\" fill(previous)"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "max", "min", "mean"]
+        },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "decimals": 2,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Disk – Bytes/sec per Logical Disk",
+      "datasource": "$influxdb",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "query": "SELECT mean(\"value\") FROM \"azure_perf_counter\" WHERE $timeFilter AND \"object_name\" = 'LogicalDisk' AND \"counter_name\" =~ /Bytes.*sec/ AND \"computer\" =~ /^$computer$/ GROUP BY time($__interval), \"instance_name\", \"counter_name\" fill(previous)"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["lastNotNull", "max", "min", "mean"]
+        },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "decimals": 2,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

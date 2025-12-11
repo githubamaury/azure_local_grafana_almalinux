@@ -1,0 +1,91 @@
+sources:
+  eventhub:
+    type: kafka
+    bootstrap_servers: "novexia.servicebus.windows.net:9093"
+    group_id: "vector-eventhub"
+    topics:
+      - "novexiahub"
+
+    # Read from the beginning for this consumer group
+    # auto_offset_reset: "earliest"
+
+    # Azure Event Hubs over Kafka – auth
+    sasl:
+      enabled: true
+      mechanism: "PLAIN"
+      # literal $ConnectionString (no env var expansion)
+      username: "$$ConnectionString"
+      # full connection string, same one that works in kcat
+      password: "Endpoint=sb://novexia.servicebus.windows.net/;SharedAccessKeyName=sasnovexia;SharedAccessKey=6azLgyldYKvmRLXA22qfCTgqL8ngnXv6f+AEhE8wtC0=;EntityPath=novexiahub"
+
+    tls:
+      enabled: true
+      # if you get TLS issues, you can temporarily set this to false
+      verify_certificate: true
+
+    # Decode messages as JSON
+    decoding:
+      codec: "json"
+
+transforms:
+  split_records:
+    type: remap
+    inputs: ["eventhub"]
+    source: |
+      if is_array(.records) {
+        . = .records
+      } else {
+        abort
+      }
+
+  normalize_values:
+    type: remap
+    inputs: ["split_records"]
+    source: |
+      .CounterValue = to_float!(.CounterValue)
+
+  set_defaults:
+    type: remap
+    inputs: ["normalize_values"]
+    source: |
+      if !exists(.InstanceName) {
+        .InstanceName = "none"
+      }
+
+  to_metrics:
+    type: log_to_metric
+    inputs: ["set_defaults"]
+    metrics:
+      - type: gauge
+        field: "CounterValue"
+        name: "azure_perf_counter"
+        tags:
+          computer: "{{ Computer }}"
+          counter_name: "{{ CounterName }}"
+          object_name: "{{ ObjectName }}"
+          instance_name: "{{ InstanceName }}"
+          source: "eventhub"
+          job: "azure-eventhub"
+
+sinks:
+  debug_eventhub:
+    type: console
+    inputs: ["eventhub"]
+    encoding:
+      codec: json
+  influxdb_v1:
+    type: influxdb_metrics
+    inputs: ["to_metrics"]
+    endpoint: "http://127.0.0.1:8086"
+    database: "azure_eventhub"
+
+    # username: "telegraf"
+    # password: "your-password"
+
+    # Optional: measurement name prefix
+    # namespace: "vector"
+
+    # Batching is optional; defaults are usually fine
+    # batch:
+    #   max_events: 1000
+    #   timeout_secs: 1
